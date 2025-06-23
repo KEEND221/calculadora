@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Cobre Minero</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f5f5f5; 
+        }
+        h1 { 
+            color: #d35400; 
+            text-align: center; 
+            margin-bottom: 20px;
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        input, select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            box-sizing: border-box;
+        }
+        button { 
+            background-color: #d35400; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            width: 100%; 
+            font-size: 16px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin-top: 10px;
+        }
+        button:hover { 
+            background-color: #e67e22; 
+        }
+        .resultado { 
+            margin-top: 25px; 
+            padding: 15px; 
+            background-color: #fff; 
+            border-radius: 5px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+        .resultado h3 { 
+            margin-top: 0; 
+            color: #d35400; 
+            border-bottom: 1px solid #eee; 
+            padding-bottom: 10px; 
+        }
+        .explicacion { 
+            background-color: #f9f9f9; 
+            padding: 10px; 
+            border-left: 4px solid #d35400; 
+            margin-top: 15px; 
+        }
+        .precio-group {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 5px;
+        }
+        .precio-group label {
+            color: #2980b9;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Calculadora de Cobre para Minería Artesanal</h1>
+    
+    <div class="input-group">
+        <label for="toneladas">Toneladas de mineral extraído:</label>
+        <input type="number" id="toneladas" placeholder="Ej: 100">
+    </div>
+    
+    <div class="input-group">
+        <label for="ley">Ley de cobre (% Cu):</label>
+        <input type="number" id="ley" placeholder="Ej: 10" step="0.1">
+    </div>
+    
+    <div class="input-group">
+        <label for="oxido">Porcentaje de óxido en el mineral (%):</label>
+        <input type="number" id="oxido" placeholder="Ej: 4" step="0.1">
+    </div>
+    
+    <div class="input-group">
+        <label for="recuperacion">Recuperación en planta (%):</label>
+        <input type="number" id="recuperacion" placeholder="Ej: 80" step="1">
+    </div>
+    
+    <div class="input-group">
+        <label for="leyConcentrado">Ley del concentrado (% Cu):</label>
+        <input type="number" id="leyConcentrado" placeholder="Ej: 30" step="1">
+    </div>
+    
+    <div class="input-group">
+        <label for="recuperacionOxidos">Recuperación de óxidos (%):</label>
+        <input type="number" id="recuperacionOxidos" placeholder="Ej: 50" step="1">
+        <small style="color: #666;">(Si no procesas óxidos, pon 0)</small>
+    </div>
+    
+    <button onclick="calcular()">Calcular Producción</button>
+    
+    <div class="resultado hidden" id="resultado">
+        <h3>Resultados de Producción</h3>
+        <p><strong>Concentrado (arenilla):</strong> <span id="concentrado"></span></p>
+        <p><strong>Cátodos de cobre:</strong> <span id="catodos"></span></p>
+        <p><strong>Cobre total recuperado:</strong> <span id="cobreTotal"></span></p>
+        
+        <div class="precio-group">
+            <label for="precioCobre">Precio actual del cobre (USD/tonelada):</label>
+            <input type="number" id="precioCobre" placeholder="Ej: 8000" value="8000">
+            <button onclick="calcularPrecio()">Calcular Valor</button>
+            <p id="valorEstimado" style="margin-top: 10px; font-weight: bold;"></p>
+        </div>
+        
+        <div class="explicacion" id="explicacion"></div>
+    </div>
+
+    <script>
+        function calcular() {
+            // Obtener valores y convertir vacíos a 0
+            const toneladas = parseFloat(document.getElementById("toneladas").value) || 0;
+            const ley = (parseFloat(document.getElementById("ley").value) || 0) / 100;
+            const oxido = (parseFloat(document.getElementById("oxido").value) || 0) / 100;
+            const recuperacion = (parseFloat(document.getElementById("recuperacion").value) || 0) / 100;
+            const leyConcentrado = (parseFloat(document.getElementById("leyConcentrado").value) || 0) / 100;
+            const recuperacionOxidos = (parseFloat(document.getElementById("recuperacionOxidos").value) || 0) / 100;
+            
+            // Validar campos mínimos
+            if (toneladas <= 0 || ley <= 0 || recuperacion <= 0 || leyConcentrado <= 0) {
+                alert("¡Debes completar al menos Toneladas, Ley, Recuperación y Ley de Concentrado!");
+                return;
+            }
+            
+            // --- CÁLCULOS PRINCIPALES ---
+            // 1. Cobre total en el mineral
+            const cobreTotal = toneladas * ley;
+            
+            // 2. Separar sulfuros y óxidos
+            const cobreSulfuro = cobreTotal * (1 - oxido);
+            const cobreOxido = cobreTotal * oxido;
+            
+            // 3. Cobre recuperado en concentrado (sulfuros)
+            const cobreConc = cobreSulfuro * recuperacion;
+            const pesoConcentrado = cobreConc / leyConcentrado;
+            
+            // 4. Cobre recuperado en cátodos (óxidos)
+            const cobreCatodos = cobreOxido * recuperacionOxidos;
+            
+            // 5. Cobre total recuperado
+            const cobreRecuperadoTotal = cobreConc + cobreCatodos;
+            
+            // --- MOSTRAR RESULTADOS ---
+            document.getElementById("concentrado").innerHTML = 
+                `${pesoConcentrado.toFixed(2)} toneladas (contienen ${cobreConc.toFixed(2)} t de Cu puro)`;
+            
+            document.getElementById("catodos").innerHTML = 
+                `${cobreCatodos.toFixed(2)} toneladas de Cu`;
+            
+            document.getElementById("cobreTotal").innerHTML = 
+                `${cobreRecuperadoTotal.toFixed(2)} toneladas de Cu (${((cobreRecuperadoTotal / cobreTotal) * 100).toFixed(1)}% del total)`;
+            
+            // Mostrar sección de resultados
+            document.getElementById("resultado").classList.remove("hidden");
+            
+            // Calcular precio automáticamente
+            calcularPrecio();
+            
+            // --- EXPLICACIÓN DETALLADA ---
+            let explicacion = `
+                <h4>¿Cómo se calculó esto?</h4>
+                <ol>
+                    <li><strong>Cobre total en ${toneladas} t de mineral:</strong> ${toneladas} t × ${(ley * 100).toFixed(1)}% = <strong>${cobreTotal.toFixed(2)} t de Cu</strong>.</li>
+                    ${oxido > 0 ? `
+                    <li><strong>Óxidos vs Sulfuros:</strong>
+                        <ul>
+                            <li>Óxidos: ${cobreTotal.toFixed(2)} t × ${(oxido * 100).toFixed(1)}% = <strong>${cobreOxido.toFixed(2)} t de Cu</strong> (${(recuperacionOxidos * 100).toFixed(1)}% recuperación → ${cobreCatodos.toFixed(2)} t a cátodos).</li>
+                            <li>Sulfuros: ${cobreTotal.toFixed(2)} t × ${((1 - oxido) * 100).toFixed(1)}% = <strong>${cobreSulfuro.toFixed(2)} t de Cu</strong> (${(recuperacion * 100).toFixed(1)}% recuperación → ${cobreConc.toFixed(2)} t recuperados).</li>
+                        </ul>
+                    </li>
+                    ` : ''}
+                    <li><strong>Concentrado (arenilla):</strong> ${cobreConc.toFixed(2)} t de Cu ÷ ${(leyConcentrado * 100).toFixed(1)}% ley = <strong>${pesoConcentrado.toFixed(2)} t de concentrado</strong>.</li>
+                </ol>
+                <p><strong>Nota:</strong> El precio se paga por el cobre puro (${cobreRecuperadoTotal.toFixed(2)} t), no por el peso del concentrado.</p>
+            `;
+            
+            document.getElementById("explicacion").innerHTML = explicacion;
+        }
+
+        function calcularPrecio() {
+            const cobreTotalElement = document.getElementById("cobreTotal");
+            if (!cobreTotalElement.textContent) return;
+            
+            const cobreTotalText = cobreTotalElement.textContent;
+            const cobreRecuperadoTotal = parseFloat(cobreTotalText.split(' ')[0]);
+            const precioCobre = parseFloat(document.getElementById("precioCobre").value) || 8000;
+            
+            const valorEstimado = cobreRecuperadoTotal * precioCobre;
+            
+            document.getElementById("valorEstimado").innerHTML = 
+                `Valor estimado: <strong>USD ${valorEstimado.toLocaleString('es-CL')}</strong> (${precioCobre.toLocaleString('es-CL')} USD/t × ${cobreRecuperadoTotal.toFixed(2)} t Cu)`;
+        }
+    </script>
+</body>
+</html>
